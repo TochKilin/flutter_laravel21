@@ -20,6 +20,7 @@ Route::middleware('auth:api')->delete('/users/{id}', [AuthController::class, 'de
 Route::middleware('auth:api')->get('/users', [AuthController::class, 'index']);
 Route::middleware('auth:api')->get('/users/{id}', [AuthController::class, 'show']);
 Route::middleware('auth:api')->get('/me', [AuthController::class, 'me']);
+Route::middleware('auth:api')->get('/loggout/{id}', [AuthController::class, 'loggout']);
 
 Route::middleware('auth:api')->group(function () {
     Route::get('/posts', [PostController::class, 'index']);

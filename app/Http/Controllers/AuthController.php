@@ -171,4 +171,13 @@ class AuthController extends Controller
     }
 
 
+    public function loggout(){
+        $user = Auth::user()->token();
+        $user->token();
+        return response()->json([
+            "message" => "User logged out successfully"
+        ],200);
+    }
+
+
 }

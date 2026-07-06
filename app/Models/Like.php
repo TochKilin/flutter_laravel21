@@ -10,7 +10,7 @@ class Like extends Model
     /** @use HasFactory<\Database\Factories\LikeFactory> */
     use HasFactory;
 
-    protected $fillable = ["user_id", "post_id"];
+    protected $fillable = ["user_id", "post_id","reaction"];
 
     public function user()
     {

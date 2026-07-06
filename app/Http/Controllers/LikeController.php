@@ -9,36 +9,52 @@ use Illuminate\Http\Request;
 
 class LikeController extends Controller
 {
-    public function toggle($postId)
-    {
-        $userId = Auth::guard('api')->id();
+   public function toggle(Request $request, $postId)
+{
+    $userId = Auth::guard('api')->id();
 
-        $post = Post::find($postId);
-        if (!$post) {
-            return response()->json(['message' => 'Post not found'], 404);
-        }
+    $post = Post::find($postId);
 
-        $existingLike = Like::where('user_id', $userId)
-                             ->where('post_id', $postId)
-                             ->first();
-
-        if ($existingLike) {
-            $existingLike->delete();
-            return response()->json([
-                'message' => 'Post unliked successfully',
-                'liked' => false
-            ], 200);
-        } else {
-            Like::create([
-                'user_id' => $userId,
-                'post_id' => $postId,
-            ]);
-            return response()->json([
-                'message' => 'Post liked successfully',
-                'liked' => true
-            ], 201);
-        }
+    if (!$post) {
+        return response()->json(['message' => 'Post not found'], 404);
     }
+
+    $like = Like::where('user_id', $userId)
+                ->where('post_id', $postId)
+                ->first();
+
+    // ❌ remove like
+    if ($request->reaction === 'none') {
+        if ($like) {
+            $like->delete();
+        }
+
+        return response()->json([
+            'liked' => false,
+            'reaction' => null
+        ]);
+    }
+
+    // 🔁 update existing reaction
+    if ($like) {
+        $like->update([
+            'reaction' => $request->reaction
+        ]);
+    } 
+    // ➕ create new
+    else {
+        $like = Like::create([
+            'user_id' => $userId,
+            'post_id' => $postId,
+            'reaction' => $request->reaction
+        ]);
+    }
+
+    return response()->json([
+        'liked' => true,
+        'reaction' => $like->reaction
+    ]);
+}
 
      public function index($postId)
     {

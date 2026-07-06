@@ -11,24 +11,39 @@ use App\Models\Post;
 class PostController extends Controller
 {
    public function index(Request $request)
-    {
-        $perPage = $request->input('per_page', 10);
-        $posts = Post::with('user:id,name,profile_image')->latest()->paginate($perPage);
+{
+    $perPage = $request->input('per_page', 10);
 
-        foreach ($posts as $post) {
-            $post->likeCount = $post->likes->count();
-            $post->commentCount = $post->comments->count();
-            $post->isLiked = $post->likes->contains('user_id', Auth::guard('api')->id());
+    $posts = Post::with([
+        'user:id,name,profile_image',
+        'likes',
+        'comments'
+    ])->latest()->paginate($perPage);
 
-            unset($post->likes);
-            unset($post->comments);
-        }
+    $userId = Auth::guard('api')->id();
 
-        return response()->json([
-            'message' => 'Posts retrieved successfully',
-            'posts' => $posts
-        ], 200);
+    foreach ($posts->items() as $post) {
+
+        // total counts
+        $post->likeCount = $post->likes->count();
+        $post->commentCount = $post->comments->count();
+
+        // user own like
+        $myLike = $post->likes->firstWhere('user_id', $userId);
+
+        $post->reaction = $myLike?->reaction ?? null; // like, love, haha...
+        $post->isLiked = $myLike ? true : false;
+
+        // clean response
+        unset($post->likes);
+        unset($post->comments);
     }
+
+    return response()->json([
+        'message' => 'Posts retrieved successfully',
+        'posts' => $posts
+    ], 200);
+}
 
     public function show($id)
     {
@@ -55,7 +70,7 @@ class PostController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'caption' => 'nullable|string|max:255',
+            'caption' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
